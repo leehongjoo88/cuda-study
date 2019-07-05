@@ -84,3 +84,32 @@ int main() {
 ## Compute Capability
 
 A version number - `SM version`, this version number identifies the features supported by the GPU.
+
+# Programming Interface
+
+## Compiling with NVCC
+
+*PTX*: The CUDA instruaction set architecture.
+
+Kernels can be written using *PTX* or *C*.
+
+`nvcc`: A compiler driver that simplifies the process of compiling C/PTX code.
+
+### Compilation Workflow
+
+#### Offline Compilation
+
+- Separate device code from host code
+- Compile the device code into an assembly form (*PTX* code) and/or binary form (*cubin* object)
+- Modify the host by replacing the `<<< ... >>>` syntax by the necessary
+CUDA C runtime function calls.
+
+#### JIT Compilation
+
+Any *PTX* code loaded by an application at runtime is compiled further to binary code.
+
+### Binary Compatibility
+
+Binary code is architecture specific. The architecture can be specified with `-code`.
+
+## CUDA C Runtime
