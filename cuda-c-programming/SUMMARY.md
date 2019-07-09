@@ -113,3 +113,20 @@ Any *PTX* code loaded by an application at runtime is compiled further to binary
 Binary code is architecture specific. The architecture can be specified with `-code`.
 
 ## CUDA C Runtime
+
+The runtime is implemented in `cudart` library.
+
+### Initialization
+
+It initializes the first time a runtime function is called.
+
+During initialization the runtime creates a CUDA context for each device.
+
+### Device Memory
+
+Device memory can be allocated either as linear memory or as *CUDA arrays*.
+
+- *CUDA arrays* are opaque memory layouts optimized for texture fetching.
+- Linear memory exists on the device in a 40-bit address space.
+
+([Sample code in chap3.cu](chap3.cu))
