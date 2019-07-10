@@ -129,4 +129,49 @@ Device memory can be allocated either as linear memory or as *CUDA arrays*.
 - *CUDA arrays* are opaque memory layouts optimized for texture fetching.
 - Linear memory exists on the device in a 40-bit address space.
 
+#### 1D memory
+
+- allocate with `cudaMalloc`
+
+#### 2D memory
+
+- allocate with `cudaMallocPitch`
+- e.g.) allocate [height][width] and access in device memory
+
+``` cuda
+float* device_ptr;
+size_t pitch;
+cudaMallocPitch(&device_ptr, &pitch, width * sizeof(float), height);
+
+// ...
+
+int h_idx = blockDim.x * blockIdx.x + threadIdx.x;
+int w_idx = blockDim.y * blockIdx.y + threadIdx.y;
+
+float* row = reinterpret_cast<float *>(reinterpret_cast<char *>(ptr) + h_idx * pitch);
+row[w_idx];
+```
+
+#### 3D memory
+
+- allocate with `cudaMalloc3D`
+- cudaPitchedPtr .xsize: width (in bytes) .ysize: height
+- e.g.) allocate [depth][height][width]
+
+``` cuda
+cudaExtent extent = make_cudaExtent(width * sizeof(float), height, depth);
+cudaPitchedPtr ptr;
+cudaMalloc3D(&ptr, extent);
+
+// ...
+
+int d_idx = blockDim.x * blockIdx.x + threadIdx.x;
+int h_idx = blockDim.y * blockIdx.y + threadIdx.y;
+int w_idx = blockDim.z * blockIdx.z + threadIdx.z;
+
+char* row_c = reinterpret_cast<char *>(ptr.ptr) + d_idx * h_idx * ptr.pitch + h_idx * ptr.pitch;
+float* row = reinterpret_cast<float *>(row_c);
+row[w_idx];
+```
+
 ([Sample code in chap3.cu](chap3.cu))

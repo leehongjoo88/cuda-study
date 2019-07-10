@@ -90,19 +90,79 @@ void tensor_2d_test() {
   }
 }
 
+__global__ void tensor_3d_assign(cudaPitchedPtr pitched_ptr, int depth,
+                                 int height, int width) {
+  const size_t pitch = pitched_ptr.pitch;
+  const size_t slice_pitch = pitch * height;
+
+  int d_idx = blockDim.x * blockIdx.x + threadIdx.x;
+  int h_idx = blockDim.y * blockIdx.y + threadIdx.y;
+  int w_idx = blockDim.z * blockIdx.z + threadIdx.z;
+
+  char *slice_ptr =
+      reinterpret_cast<char *>(pitched_ptr.ptr) + d_idx * slice_pitch;
+  int *row = reinterpret_cast<int *>(slice_ptr + h_idx * pitch);
+  row[w_idx] = d_idx * height * width + h_idx * width + w_idx;
+}
+
 void tensor_3d_test() {
+  const int depth = 32;
   const int height = 64;
   const int width = 128;
-  const int depth = 32;
 
-  cudaExtent cuda_extent = make_cudaExtent(width * sizeof(float), height, depth);
+  cudaExtent extent = make_cudaExtent(width * sizeof(int), height, depth);
   cudaPitchedPtr pitched_ptr;
   cudaMalloc3D(&pitched_ptr, extent);
 
-  tensor_3d_assign<<<grid_dim, block_dim>>>(pitched_ptr, int height, int width, int depth);
+  dim3 block_dim(4, 4, 4);
+  dim3 grid_dim(depth / 4, height / 4, width / 4);
+  tensor_3d_assign<<<grid_dim, block_dim>>>(pitched_ptr, depth, height, width);
+
+  int host_ptr[32][64][128];
+
+  cudaMemcpy3DParms memcpy_params;
+  memcpy_params.srcPtr = pitched_ptr;
+  memcpy_params.dstPtr.ptr = host_ptr;
+  memcpy_params.dstPtr.pitch = width * sizeof(int);
+  memcpy_params.dstPtr.xsize = width;
+  memcpy_params.dstPtr.ysize = height;
+  memcpy_params.kind = cudaMemcpyDeviceToHost;
+  memcpy_params.extent.depth = depth;
+  memcpy_params.extent.height = height;
+  memcpy_params.extent.width = width * sizeof(int);
+
+  cudaMemcpy3D(&memcpy_params);
+  cudaFree(pitched_ptr.ptr);
+
+  bool is_ok = true;
+  int value = 0;
+  for (int d = 0; d < depth; ++d) {
+    for (int h = 0; h < height; ++h) {
+      for (int w = 0; w < width; ++w, ++value) {
+        if (host_ptr[d][h][w] != value) {
+          std::cout << "wrong result. host_ptr[" << d << "][" << h << "][" << w
+                    << "] = " << host_ptr[d][h][w] << ",, value = " << value
+                    << std::endl;
+          is_ok = false;
+          break;
+        }
+      }
+      if (!is_ok)
+        break;
+    }
+    if (!is_ok)
+      break;
+  }
+  if (is_ok) {
+    std::cout << "ok" << std::endl;
+  } else {
+    std::cout << "wrong" << std::endl;
+  }
 }
 
 int main() {
-  tensor_1d_test();
-  tensor_2d_test();
+  // tensor_1d_test();
+  // tensor_2d_test();
+  tensor_3d_test();
+  return 0;
 }
