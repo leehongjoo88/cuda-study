@@ -175,3 +175,20 @@ row[w_idx];
 ```
 
 ([Sample code in chap3.cu](chap3.cu))
+
+### Shared Memory
+
+Shared memory is:
+    - much faster than global memory.
+    - allocated using the `__shared__` memory space specifier.
+    - shared for all threads in a thread block.
+
+
+#### Shared Memory by Example - Matrix multiplication
+
+- Straightforward matrix multiplication: each threads computes one output element.
+- Shared memory utilizing: each block computes one output sub matrix.
+   - Each threads loads one element * (A.width / BLOCK_SIZE) times - lesser than previous
+   each thread loading A.width * B.height times.
+
+([Sample code in chap3-matmul.cu](chap3-matmul.cu))
