@@ -190,5 +190,40 @@ Shared memory is:
 - Shared memory utilizing: each block computes one output sub matrix.
    - Each threads loads one element * (A.width / BLOCK_SIZE) times - lesser than previous
    each thread loading A.width * B.height times.
+   
+(Make one block access one memory spot only one time!!!!!!)
 
 ([Sample code in chap3-matmul.cu](chap3-matmul.cu))
+
+### Page-Locked Host Memory
+
+*page-locked*=*pinned* host memory functions:
+
+- `cudaHostAlloc()`, `cudaFreeHost()`: allocate and free page-locked host memory.
+- `cudaHostRegister()` page-locks a range of memory allocated by `malloc()`.
+
+Benefits:
+
+- (On some devices) Copies between pinned host and device can be performed concurrently.
+- (On some devices) The need to copy can be eliminated.
+- On systems with a front-side bus, bandwidth between host memory and device memory is higher.
+
+#### Portable Memory
+
+A block of page-locked memory can be used in conjuction with any device in the system.
+(Detailed should be studied later).
+
+#### Write-Combining Memory
+
+Write-combining memory frees up the host's L1 and L2 cache resources, making more cache available to the rest of the application.
+Should in general be used for memory that the host only writes to.
+
+#### Mapped Memory
+
+A block of pinned host memory can be mapped into the device.
+
+Advantages:
+- No need to allocate a block in device.
+- No need to use streams to overlap data transfers with kernel execution.
+
+(Read caution part before using this feature)
