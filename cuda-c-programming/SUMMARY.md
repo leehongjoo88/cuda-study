@@ -227,3 +227,76 @@ Advantages:
 - No need to use streams to overlap data transfers with kernel execution.
 
 (Read caution part before using this feature)
+
+### Asynchronous Concurrent Execution
+
+Independent tasks that can operate concurrently with one another:
+
+- Computation on the host
+- Computation on the device
+- Memory transfers from the host to the device
+- Memory transfers from the device to the host
+- Memory transfers within the memory of a given device
+- Memory transfers among devices
+
+#### Concurrent Execution between Host and Device
+
+Concurrent host execution is facilitated through asynchronous library function.
+The following device operations are asynchronous with respect to the host:
+
+- Kernel launches
+- Memory copies within a single device
+- Memory copies from host to device < 64KB or less
+- Memory copies performed by functions that are suffixed with `Async`
+- Memory set function calls
+
+#### Concurrent Kernel Execution
+
+Some device of compute capability 2.x and higher can execute multiple kernels concurrently.
+
+#### Overlap of Data Transfer and Kernel Execution
+
+Some devices can perform an asynchronous memory copy to or from the GPU concurrently with kernel
+execution. If host memory is involved, it must be page-locked.
+
+#### Streams
+
+A stream is a sequence of commands that execute in order.
+
+##### Creation and Destruction
+
+1. Creates two streams & page-locked host memory
+
+``` cuda
+cudaStream_t stream[2];
+for (int i = 0; i < 2; ++i) {
+  cudaStreamCreate(&stream[i]);
+
+float* host_ptr;
+cudaMallocHost(&host_ptr, 2 * size);
+```
+
+2. Run concurrently using stream
+
+``` cuda
+for (int i = 0; i < 2; ++i) {
+  cudaMemcpyAsync(input_dev_ptr + i * size,
+                  host_ptr + i * size,
+                  size, cudaMemcpyHostToDevice, stream[i]);
+  foo<<<100, 512, 0, stream[i]>>>(output_dev_ptr + i * size,
+                                  input_dev_ptr + i * size, size);
+  cudaMemcpyAsync(host_ptr + i * size, output_dev_ptr + i * size,
+                  size, cudaMemcpyDeviceToHost, stream[i]);
+}
+```
+
+3. Release stream
+
+``` cuda
+for (int i = 0; i < 2; ++i) {
+  cudaStreamDestroy(stream[i]);
+}
+```
+
+##### Default Stream
+
