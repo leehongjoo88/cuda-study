@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <omp.h>
 
 void sum_cpu(int n, int *x, int *y, int *z) {
   #pragma omp parallel for

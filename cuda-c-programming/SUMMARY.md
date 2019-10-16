@@ -300,3 +300,51 @@ for (int i = 0; i < 2; ++i) {
 
 ##### Default Stream
 
+##### Explicit Synchronization
+
+  - `cudaDeviceSynchronize()` waits until all preceding commands in all streams of all host threads have completed.
+  - `cudaStreamSynchronize()` takes a stream as parameter and waits until all preceding commands in the given stream have completed.
+  - `cudaStreamWaitEvent()`
+
+##### Implicit Synchronization
+
+  - a `page-locked` host memory allocation
+  - a device memory allocation
+  - a device memory set
+  - a memory copy between two addresses to the same device memory
+  - any CUDA command to the NULL stream
+  - a switch between the L1/shared memory configurations
+  
+
+##### Overlapping Behavior
+
+(TBD)
+
+##### Callbacks
+
+(TBD)
+
+#### Graphs
+
+(TBD)
+
+# Hardware Implementation
+
+The NVIDIA GPU architecture is built around a scalable array of multithreaded *Streaming Multiprocessors (SMs)*. A multiprocessor emplys a unique architecture called *SIMT (Single-Instruction, Multiple-Thread).
+
+## SIMT Architecture
+
+1. The multiprocessor creates, manages, schedules, and executes threads in groups of 32 parallel threads called *warps*.
+2. A multiprocessor partitions thread blocks into warps and wrap gets scheduled by a *warp scheduler* for execution.
+3. All 32 threads of a warp should agree on their execution path for the full efficiency. (???)
+4. For the purposes of correctness, the programmer can essentially ignore the SIMT behavior; however, substantial performance improvements can be realized by taking care that the code seldom requires threads in a warp to diverge.
+
+# Performance Guidelines
+
+## Overall Performance Optimization Strategies
+
+1. Maximize parallel execution to achieve maximum utilization
+2. Optimize memory usage to achieve maximum memory throughput
+3. Optimize instruction usage to achieve maximum instruction throughput
+
+## Maximize Utilization
