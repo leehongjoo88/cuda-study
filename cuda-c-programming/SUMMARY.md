@@ -12,7 +12,7 @@ Three key abstractions
   1. A hierarchy of thread groups
   2. Shared memories
   3. Barrier synchronization
-  
+
 > These abstractions provide fine-grained data parallelism and thread parallelism, nested within coarse-grained data parallelism and task parallelism.
 
 (? What is data parallelism, thread parallelism and task parallelism?)
@@ -190,7 +190,7 @@ Shared memory is:
 - Shared memory utilizing: each block computes one output sub matrix.
    - Each threads loads one element * (A.width / BLOCK_SIZE) times - lesser than previous
    each thread loading A.width * B.height times.
-   
+
 (Make one block access one memory spot only one time!!!!!!)
 
 ([Sample code in chap3-matmul.cu](chap3-matmul.cu))
@@ -314,7 +314,7 @@ for (int i = 0; i < 2; ++i) {
   - a memory copy between two addresses to the same device memory
   - any CUDA command to the NULL stream
   - a switch between the L1/shared memory configurations
-  
+
 
 ##### Overlapping Behavior
 
@@ -348,3 +348,41 @@ The NVIDIA GPU architecture is built around a scalable array of multithreaded *S
 3. Optimize instruction usage to achieve maximum instruction throughput
 
 ## Maximize Utilization
+
+### Application Level
+
+The application should maximize parallel execution
+
+- between the host, the devices,
+- and the bus connecting the host to devices
+
+by using asynchronous functions calls and streams.
+
+### Device Level
+
+> At a lower level, the application should maximize parallel execution between the multiprocessors of a device.
+
+### Multiprocessor level
+
+- A full utilization is achieved when all warp schedulers always have some instruction to issue for some warp at every clock cycle.
+- A warp may not ready to execute because of memory fence or synchronization point.
+- The number of registers used by a kernel can affect the number of concurrent blocks.
+  - `double` variable and `long long` variable uses two registers.
+
+#### Occupancy Calculator
+
+- Several API functions exist to assist programmers in choosing thread block size based on register and shared memory requirements.
+
+## Maximize Memory Throughput
+
+Minimize data transfers with low bandwidth (host <-> device).
+
+### Data Transfer between Host and Device
+
+- May have to move intermediate data structure creation to device
+- Single large transfer always performs better than multiple small transfers
+- Using page-locked host memory may help
+-
+### Device Memory Accesses
+
+
